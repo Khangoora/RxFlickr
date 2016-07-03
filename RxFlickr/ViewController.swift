@@ -11,6 +11,7 @@ import RxCocoa
 import RxSwift
 import AlamofireImage
 import Alamofire
+import ImageIO
 
 class ViewController: UIViewController, UICollectionViewDelegate, UISearchBarDelegate, UISearchControllerDelegate {
     
@@ -32,6 +33,9 @@ class ViewController: UIViewController, UICollectionViewDelegate, UISearchBarDel
     override func viewDidLoad() {
         super.viewDidLoad()
         setupRx()
+        getImageMetaData()
+        
+
     }
     
     func setupRx() {
@@ -44,15 +48,17 @@ class ViewController: UIViewController, UICollectionViewDelegate, UISearchBarDel
                 
                 Alamofire.request(.GET, photo.imageURL)
                     .responseImage { response in
+
                         
                         if let image = response.result.value {
                             
                             cell.imageView.image = image.resizeImage(image, newWidth: 125.0)
                             cell.titleLabel.text = photo.title
+                            
+
                         }
                 }
 
-                
                 return cell
             }
             .addDisposableTo(disposeBag)
@@ -70,6 +76,20 @@ class ViewController: UIViewController, UICollectionViewDelegate, UISearchBarDel
                 }
             }
             .addDisposableTo(disposeBag)
+    }
+    
+    func getImageMetaData() {
+        let url = NSURL(string: "http://ptforum.photoolsweb.com/ubbthreads.php?ubb=download&Number=1024&filename=1024-2006_1011_093752.jpg")
+        
+        if let imageSource = CGImageSourceCreateWithURL(url!, nil) {
+            if let imageProperties = CGImageSourceCopyPropertiesAtIndex(imageSource, 0, nil) as Dictionary! {
+                print(imageProperties)
+                if let GPSProperties = imageProperties[kCGImagePropertyGPSDictionary] as? [String : AnyObject]{
+                    print(GPSProperties[kCGImagePropertyGPSLatitude as String], GPSProperties[kCGImagePropertyGPSLongitude as String])
+                }
+                
+            }
+        }
     }
 
 }
