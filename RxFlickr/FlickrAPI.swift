@@ -29,7 +29,6 @@ struct FlickrAPI {
     var photo = Photo()
     var photos = [Photo]()
 
-    
     init(withNameObservable nameObservable: Observable<String>) {
         self.imageSearch = nameObservable
     }
@@ -53,11 +52,19 @@ struct FlickrAPI {
             .map { (response, json) -> [Photo] in
                 
                 self.photos.removeAll()
-                print(self.photos)
+        
                 var innerJson:JSON = JSON(json)
-                let numberOfPhotos = innerJson["photos"]["perpage"].int
+                var numberOfPhotos : Int = 0
+                let photosFromJSOn = innerJson["photos"]["total"].intValue
                 
-                for i in 0...numberOfPhotos!{
+                if (photosFromJSOn>100) {
+                    numberOfPhotos = 100
+                }
+                else {
+                    numberOfPhotos = photosFromJSOn
+                }
+                
+                for i in 0...(numberOfPhotos){
                     var innerJson:JSON = JSON(json)
                     self.photo.farm = innerJson["photos"]["photo"][i]["farm"].stringValue
                     self.photo.server = innerJson["photos"]["photo"][i]["server"].stringValue
@@ -68,15 +75,11 @@ struct FlickrAPI {
 
                 
                     self.photo.imageURL = "http://farm\(self.photo.farm).staticflickr.com/\(self.photo.server)/\(self.photo.identifier)_\(self.photo.secret)_s.jpg/"
-                    
+                  
                     self.photos.append(self.photo)
-
-                
                 }
             
                 return self.photos
-
-                
             }
             .observeOn(MainScheduler.instance)
             .doOn(onNext: { response in
@@ -84,4 +87,17 @@ struct FlickrAPI {
             })
             .asDriver(onErrorJustReturn: [])
     }
+/*  Get the Exif metadata from flickr
+    func getImageMetaDataActual() {
+        Alamofire.request(.GET, "https://api.flickr.com/services/rest/?method=flickr.photos.getExif&api_key=10def1bdc4c43b3435513ee7df0ac4d1&photo_id=28010652176&format=json&nojsoncallback=1&api_sig=de57ef7e5305aa41497da5bb326afcb1")
+            .responseJSON { response in
+                
+                if let JSON = response.result.value {
+                    print("JSON: \(JSON)")
+                }
+        }
+        
+    }
+ */
+
 }

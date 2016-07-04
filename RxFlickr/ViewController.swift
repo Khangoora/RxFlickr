@@ -33,9 +33,6 @@ class ViewController: UIViewController, UICollectionViewDelegate, UISearchBarDel
     override func viewDidLoad() {
         super.viewDidLoad()
         setupRx()
-        getImageMetaData()
-        
-
     }
     
     func setupRx() {
@@ -48,17 +45,17 @@ class ViewController: UIViewController, UICollectionViewDelegate, UISearchBarDel
                 
                 Alamofire.request(.GET, photo.imageURL)
                     .responseImage { response in
-
                         
                         if let image = response.result.value {
                             
                             cell.imageView.image = image.resizeImage(image, newWidth: 125.0)
                             cell.titleLabel.text = photo.title
-                            
-
+                            cell.hidden = false
                         }
-                }
-
+                        else {
+                            cell.hidden = true
+                        }
+                    }
                 return cell
             }
             .addDisposableTo(disposeBag)
@@ -66,7 +63,7 @@ class ViewController: UIViewController, UICollectionViewDelegate, UISearchBarDel
         flickrAPI
             .rx_Photos
             .driveNext { photos in
-                if photos.count == 0 {
+                if photos.count == 1 {
                     let alert = UIAlertController(title: "Oops", message: "No Photos for this search.", preferredStyle: .Alert)
                     alert.addAction(UIAlertAction(title: "OK", style: .Default, handler: nil))
                     if self.navigationController?.visibleViewController?.isMemberOfClass(UIAlertController.self) != true {
@@ -79,9 +76,10 @@ class ViewController: UIViewController, UICollectionViewDelegate, UISearchBarDel
     }
     
     func getImageMetaData() {
-        let url = NSURL(string: "http://ptforum.photoolsweb.com/ubbthreads.php?ubb=download&Number=1024&filename=1024-2006_1011_093752.jpg")
+        let url = NSURL(string: "https://api.flickr.com/services/rest/?method=flickr.photos.getExif&api_key=10def1bdc4c43b3435513ee7df0ac4d1&photo_id=28010652176&format=json&nojsoncallback=1&api_sig=de57ef7e5305aa41497da5bb326afcb1")        
         
         if let imageSource = CGImageSourceCreateWithURL(url!, nil) {
+            print(imageSource)
             if let imageProperties = CGImageSourceCopyPropertiesAtIndex(imageSource, 0, nil) as Dictionary! {
                 print(imageProperties)
                 if let GPSProperties = imageProperties[kCGImagePropertyGPSDictionary] as? [String : AnyObject]{
@@ -91,9 +89,7 @@ class ViewController: UIViewController, UICollectionViewDelegate, UISearchBarDel
             }
         }
     }
-
 }
-
 extension UIImage {
     func resizeImage(image: UIImage, newWidth: CGFloat) -> UIImage {
         

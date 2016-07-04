@@ -25,8 +25,6 @@ struct Photo {
         self.farm = ""
         self.imageURL = ""
         self.title = ""
-
-
     }
 }
 
