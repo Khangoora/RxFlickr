@@ -69,11 +69,8 @@ struct FlickrAPI {
                     self.photo.farm = innerJson["photos"]["photo"][i]["farm"].stringValue
                     self.photo.server = innerJson["photos"]["photo"][i]["server"].stringValue
                     self.photo.identifier = innerJson["photos"]["photo"][i]["id"].stringValue
-                
                     self.photo.secret = innerJson["photos"]["photo"][i]["secret"].stringValue
                     self.photo.title = innerJson["photos"]["photo"][i]["title"].stringValue
-
-                
                     self.photo.imageURL = "http://farm\(self.photo.farm).staticflickr.com/\(self.photo.server)/\(self.photo.identifier)_\(self.photo.secret)_s.jpg/"
                   
                     self.photos.append(self.photo)

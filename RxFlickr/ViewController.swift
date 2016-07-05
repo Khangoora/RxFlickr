@@ -27,12 +27,12 @@ class ViewController: UIViewController, UICollectionViewDelegate, UISearchBarDel
             .throttle(0.5, scheduler: MainScheduler.instance)
             .map{$0.lowercaseString}
             .distinctUntilChanged()
-        
     }
     
     override func viewDidLoad() {
         super.viewDidLoad()
         setupRx()
+        configureKeyboardDismissesOnScroll()
     }
     
     func setupRx() {
@@ -45,9 +45,7 @@ class ViewController: UIViewController, UICollectionViewDelegate, UISearchBarDel
                 
                 Alamofire.request(.GET, photo.imageURL)
                     .responseImage { response in
-                        
                         if let image = response.result.value {
-                            
                             cell.imageView.image = image.resizeImage(image, newWidth: 125.0)
                             cell.titleLabel.text = photo.title
                             cell.hidden = false
@@ -73,7 +71,24 @@ class ViewController: UIViewController, UICollectionViewDelegate, UISearchBarDel
                 }
             }
             .addDisposableTo(disposeBag)
+        collectionView.rx_itemSelected
     }
+    
+    func configureKeyboardDismissesOnScroll() {
+        let searchBar = self.searchBar
+        
+        collectionView.rx_contentOffset
+            .asDriver()
+            .debug()
+            .driveNext { _ in
+                if searchBar.isFirstResponder() {
+                    _ = searchBar.resignFirstResponder()
+                }
+            }
+            .addDisposableTo(disposeBag)
+    }
+    
+    
     
     func getImageMetaData() {
         let url = NSURL(string: "https://api.flickr.com/services/rest/?method=flickr.photos.getExif&api_key=10def1bdc4c43b3435513ee7df0ac4d1&photo_id=28010652176&format=json&nojsoncallback=1&api_sig=de57ef7e5305aa41497da5bb326afcb1")        
