@@ -24,10 +24,11 @@ struct FlickrAPI {
     let JSON_CALLBACK:Int = 1
     let PRIVACY_FILTER:Int = 1
     
-    lazy var rx_Photos: Driver<[Photo]> = self.fetchPhotos()
-    private var imageSearch: Observable<String>
     var photo = Photo()
     var photos = [Photo]()
+    
+    lazy var rx_Photos: Driver<[Photo]> = self.fetchPhotos()
+    private var imageSearch: Observable<String>
 
     init(withNameObservable nameObservable: Observable<String>) {
         self.imageSearch = nameObservable
@@ -84,6 +85,8 @@ struct FlickrAPI {
             })
             .asDriver(onErrorJustReturn: [])
     }
+    
+    
 /*  Get the Exif metadata from flickr
     func getImageMetaDataActual() {
         Alamofire.request(.GET, "https://api.flickr.com/services/rest/?method=flickr.photos.getExif&api_key=10def1bdc4c43b3435513ee7df0ac4d1&photo_id=28010652176&format=json&nojsoncallback=1&api_sig=de57ef7e5305aa41497da5bb326afcb1")

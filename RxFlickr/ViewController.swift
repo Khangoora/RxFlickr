@@ -18,6 +18,10 @@ class ViewController: UIViewController, UICollectionViewDelegate, UISearchBarDel
     @IBOutlet weak var searchBar: UISearchBar!
     @IBOutlet weak var collectionView: UICollectionView!
     var flickrAPI: FlickrAPI!
+    let photoCache = AutoPurgingImageCache(
+        memoryCapacity: 100 * 1024 * 1024,
+        preferredMemoryUsageAfterPurge: 60 * 1024 * 1024
+    )
     
     let disposeBag = DisposeBag()
     var rx_searchBarText: Observable<String> {
@@ -43,15 +47,26 @@ class ViewController: UIViewController, UICollectionViewDelegate, UISearchBarDel
             .drive(collectionView.rx_itemsWithCellFactory) { (cv, i, photo) in
                 let cell = cv.dequeueReusableCellWithReuseIdentifier("Cell", forIndexPath: NSIndexPath(forRow: i, inSection: 0)) as! imageCollectionViewCell
                 
-                Alamofire.request(.GET, photo.imageURL)
-                    .responseImage { response in
-                        if let image = response.result.value {
-                            cell.imageView.image = image.resizeImage(image, newWidth: 125.0)
-                            cell.titleLabel.text = photo.title
-                            cell.hidden = false
-                        }
-                        else {
-                            cell.hidden = true
+                //If image cached no need to make network call
+                if let image = self.cachedImage(photo.imageURL) {
+                    cell.imageView.image = image.resizeImage(image, newWidth: 125.0)
+                    cell.titleLabel.text = photo.title
+                    cell.hidden = false
+                }
+                
+                else {
+                    //if image not cached get image and cache it
+                    Alamofire.request(.GET, photo.imageURL)
+                        .responseImage { response in
+                            if let image = response.result.value {
+                                cell.imageView.image = image.resizeImage(image, newWidth: 125.0)
+                                cell.titleLabel.text = photo.title
+                                self.cacheImage(image, url: photo.imageURL)
+                                cell.hidden = false
+                            }
+                            else {
+                                cell.hidden = true  //if image does not exist hide collectionViewCell
+                            }
                         }
                     }
                 return cell
@@ -78,7 +93,6 @@ class ViewController: UIViewController, UICollectionViewDelegate, UISearchBarDel
         
         collectionView.rx_contentOffset
             .asDriver()
-            .debug()
             .driveNext { _ in
                 if searchBar.isFirstResponder() {
                     _ = searchBar.resignFirstResponder()
@@ -87,7 +101,17 @@ class ViewController: UIViewController, UICollectionViewDelegate, UISearchBarDel
             .addDisposableTo(disposeBag)
     }
     
+    //Mark: Caching
     
+    func cacheImage(image: Image, url: String) {
+        photoCache.addImage(image, withIdentifier: url)
+    }
+    
+    func cachedImage(url: String) -> Image? {
+        return photoCache.imageWithIdentifier(url)
+    }
+    
+    //Mark: MetaData
     
     func getImageMetaData() {
         let url = NSURL(string: "https://api.flickr.com/services/rest/?method=flickr.photos.getExif&api_key=10def1bdc4c43b3435513ee7df0ac4d1&photo_id=28010652176&format=json&nojsoncallback=1&api_sig=de57ef7e5305aa41497da5bb326afcb1")        
