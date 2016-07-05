@@ -71,7 +71,6 @@ class ViewController: UIViewController, UICollectionViewDelegate, UISearchBarDel
                 }
             }
             .addDisposableTo(disposeBag)
-        collectionView.rx_itemSelected
     }
     
     func configureKeyboardDismissesOnScroll() {
