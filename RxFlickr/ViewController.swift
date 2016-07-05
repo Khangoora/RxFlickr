@@ -49,26 +49,13 @@ class ViewController: UIViewController, UICollectionViewDelegate, UISearchBarDel
                 
                 //If image cached no need to make network call
                 if let image = self.cachedImage(photo.imageURL) {
-                    cell.imageView.image = image.resizeImage(image, newWidth: 125.0)
-                    cell.titleLabel.text = photo.title
-                    cell.hidden = false
+                    self.setupCell(cell, image: image, photo: photo)
                 }
                 
-                else {
-                    //if image not cached get image and cache it
-                    Alamofire.request(.GET, photo.imageURL)
-                        .responseImage { response in
-                            if let image = response.result.value {
-                                cell.imageView.image = image.resizeImage(image, newWidth: 125.0)
-                                cell.titleLabel.text = photo.title
-                                self.cacheImage(image, url: photo.imageURL)
-                                cell.hidden = false
-                            }
-                            else {
-                                cell.hidden = true  //if image does not exist hide collectionViewCell
-                            }
-                        }
-                    }
+                else { //Send Alamofire request to get images
+                    self.getImages(photo, cell: cell)
+                }
+                
                 return cell
             }
             .addDisposableTo(disposeBag)
@@ -77,12 +64,7 @@ class ViewController: UIViewController, UICollectionViewDelegate, UISearchBarDel
             .rx_Photos
             .driveNext { photos in
                 if photos.count == 1 {
-                    let alert = UIAlertController(title: "Oops", message: "No Photos for this search.", preferredStyle: .Alert)
-                    alert.addAction(UIAlertAction(title: "OK", style: .Default, handler: nil))
-                    if self.navigationController?.visibleViewController?.isMemberOfClass(UIAlertController.self) != true {
-                        self.presentViewController(alert, animated: true, completion: nil)
-                    }
-                    
+                    self.setAlert("Oops", message: "No photos for this search.")
                 }
             }
             .addDisposableTo(disposeBag)
@@ -101,7 +83,42 @@ class ViewController: UIViewController, UICollectionViewDelegate, UISearchBarDel
             .addDisposableTo(disposeBag)
     }
     
-    //Mark: Caching
+    // MARK: Get Images using Alamofire
+    func getImages(photo: Photo, cell: imageCollectionViewCell) {
+        Alamofire.request(.GET, photo.imageURL)
+            .responseImage { response in
+                if let image = response.result.value {
+                    self.setupCell(cell, image: image, photo: photo)
+                    self.cacheImage(image, url: photo.imageURL)
+                    
+                }
+                else {
+                    cell.hidden = true  //if image does not exist hide collectionViewCell
+                }
+        }
+        
+    }
+    
+    // MARK: Setup Cell
+    func setupCell(cell : imageCollectionViewCell, image : UIImage, photo : Photo){
+        cell.imageView.image = image.resizeImage(image, newWidth: 125.0)
+        cell.titleLabel.text = photo.title
+        cell.hidden = false
+        
+        
+    }
+    
+    // MARK: Setup Alert
+    
+    func setAlert(title : String, message : String){
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .Alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .Default, handler: nil))
+        if self.navigationController?.visibleViewController?.isMemberOfClass(UIAlertController.self) != true {
+            self.presentViewController(alert, animated: true, completion: nil)
+        }
+    }
+    
+    // MARK: Caching
     
     func cacheImage(image: Image, url: String) {
         photoCache.addImage(image, withIdentifier: url)
@@ -111,10 +128,10 @@ class ViewController: UIViewController, UICollectionViewDelegate, UISearchBarDel
         return photoCache.imageWithIdentifier(url)
     }
     
-    //Mark: MetaData
+    // MARK: MetaData
     
     func getImageMetaData() {
-        let url = NSURL(string: "https://api.flickr.com/services/rest/?method=flickr.photos.getExif&api_key=10def1bdc4c43b3435513ee7df0ac4d1&photo_id=28010652176&format=json&nojsoncallback=1&api_sig=de57ef7e5305aa41497da5bb326afcb1")        
+        let url = NSURL(string: "http://ptforum.photoolsweb.com/ubbthreads.php?ubb=download&Number=1024&filename=1024-2006_1011_093752.jpg")        
         
         if let imageSource = CGImageSourceCreateWithURL(url!, nil) {
             print(imageSource)
